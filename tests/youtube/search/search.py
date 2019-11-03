@@ -42,9 +42,9 @@ class Search(stbt.FrameObject):
         """
         m = stbt.match("selection.png", frame=self._frame,
                        region=stbt.Region.bounding_box(
-                           self.KEYBOARD_GRID.region,
-                           self.BOTTOM_GRID.region))
-        for grid in [self.KEYBOARD_GRID, self.BOTTOM_GRID]:
+                           Search.KEYBOARD_GRID.region,
+                           Search.BOTTOM_GRID.region))
+        for grid in [Search.KEYBOARD_GRID, Search.BOTTOM_GRID]:
             try:
                 text = grid.get(region=m.region).data
                 return text
