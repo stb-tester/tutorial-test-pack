@@ -23,7 +23,7 @@ class Search(stbt.FrameObject):
             "567890"])
     BOTTOM_GRID = stbt.Grid(
         region=stbt.Region(x=125, y=470, right=430, bottom=525),
-        data=[["SPACE", "DELETE", "CLEAR"]])
+        data=[[" ", "DELETE", "CLEAR"]])
 
     @property
     def is_visible(self):
