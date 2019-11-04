@@ -13,7 +13,7 @@ class Search(stbt.FrameObject):
     """
 
     KEYBOARD_GRID = stbt.Grid(
-        region=stbt.Region(x=125, y=165, right=430, bottom=470),
+        region=stbt.Region(x=125, y=140, right=430, bottom=445),
         data=[
             "abcdef",
             "ghijkl",
@@ -22,7 +22,7 @@ class Search(stbt.FrameObject):
             "yz1234",
             "567890"])
     BOTTOM_GRID = stbt.Grid(
-        region=stbt.Region(x=125, y=470, right=430, bottom=525),
+        region=stbt.Region(x=125, y=445, right=430, bottom=500),
         data=[[" ", "DELETE", "CLEAR"]])
 
     @property
