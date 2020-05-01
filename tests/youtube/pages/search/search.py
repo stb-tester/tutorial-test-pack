@@ -1,5 +1,6 @@
 # coding: utf-8
-"""Copyright 2019 Stb-tester.com Ltd <support@stb-tester.com>"""
+
+"""Copyright 2019-2020 Stb-tester.com Ltd <support@stb-tester.com>"""
 
 import stbt
 
@@ -185,7 +186,8 @@ class Search(stbt.FrameObject):
                 return text
             except IndexError:
                 pass
-        assert False, "Matched selection %r outside of known locations" % (m.region,)
+        assert False, "Matched selection %r outside of known locations" \
+            % (m.region,)
 
     def enter_text(self, text):
         return Search._kb.enter_text(text.lower(), page=self)
@@ -193,5 +195,5 @@ class Search(stbt.FrameObject):
     def clear(self):
         page = self
         page = Search._kb.navigate_to("CLEAR", page)
-        stbt.press_and_wait("KEY_OK")
+        stbt.press_and_wait("KEY_OK")  # pylint:disable=stbt-unused-return-value
         return page.refresh()
