@@ -1,6 +1,6 @@
-"""Copyright 2019 Stb-tester.com Ltd <support@stb-tester.com>"""
+"""Copyright 2019-2020 Stb-tester.com Ltd <support@stb-tester.com>"""
 
-from . import youtube
+from .pages.search import Search
 
 
 def test_youtube_keyboard():
@@ -8,6 +8,6 @@ def test_youtube_keyboard():
 
     Precondition: Already at the YouTube Search page.
     """
-    page = youtube.Search()
+    page = Search()
     assert page, "Not at the YouTube Search page"
     page.enter_text("peppa pig")
