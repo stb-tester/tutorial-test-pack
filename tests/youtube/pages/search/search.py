@@ -155,10 +155,14 @@ class Search(stbt.FrameObject):
         0 CLEAR KEY_DOWN
         SPACE 5 KEY_UP
         SPACE 6 KEY_UP
+        SPACE BACKSPACE KEY_RIGHT
         BACKSPACE 7 KEY_UP
         BACKSPACE 8 KEY_UP
+        BACKSPACE SPACE KEY_LEFT
+        BACKSPACE CLEAR KEY_RIGHT
         CLEAR 9 KEY_UP
         CLEAR 0 KEY_UP
+        CLEAR BACKSPACE KEY_LEFT
     """)
 
     @property
