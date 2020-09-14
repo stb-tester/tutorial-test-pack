@@ -14,4 +14,5 @@ def test_youtube_keyboard():
 
     page = Search()
     assert page, "Not at the YouTube Search page"
-    page.enter_text(text)
+    page = page.clear()
+    page = page.enter_text(text)
