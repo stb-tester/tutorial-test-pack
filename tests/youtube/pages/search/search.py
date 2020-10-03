@@ -74,6 +74,13 @@ def define_keyboard():
                               kb.find_key(name=name, mode=target_mode),
                               "KEY_OK")
 
+    for source_mode, target_mode in [("lowercase", "uppercase"),
+                                     ("uppercase", "symbols"),
+                                     ("symbols", "lowercase")]:
+        for key in kb.find_keys(mode=source_mode):
+            target = kb.find_key(region=key.region, mode=target_mode)
+            kb.add_transition(key, target, "KEY_PLAY")
+
     return kb
 
 
