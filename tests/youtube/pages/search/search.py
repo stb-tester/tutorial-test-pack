@@ -2,8 +2,82 @@
 
 """Copyright 2019-2020 Stb-tester.com Ltd <support@stb-tester.com>"""
 
-import networkx
 import stbt
+
+
+top_grid = stbt.Grid(region=stbt.Region(x=145, y=125, right=410, bottom=160),
+                     data=[["abc", "ABC", "#+-"]])
+bottom_grid = stbt.Grid(region=stbt.Region(x=125, y=480, right=425, bottom=520),
+                        data=[[" ", "DELETE", "CLEAR"]])
+middle_region = stbt.Region(x=125, y=175, right=425, bottom=475)
+middle_grids = {
+    "lowercase": stbt.Grid(region=middle_region,
+                           data=["abcdef",
+                                 "ghijkl",
+                                 "mnopqr",
+                                 "stuvwx",
+                                 "yz1234",
+                                 "567890"]),
+    "uppercase": stbt.Grid(region=middle_region,
+                           data=["ABCDEF",
+                                 "GHIJKL",
+                                 "MNOPQR",
+                                 "STUVWX",
+                                 "YZ1234",
+                                 "567890"]),
+    "symbols": stbt.Grid(region=middle_region,
+                         data=["!@#$%&",
+                               "~*\\/?^",
+                               "_`;:|=",
+                               "éñ[]{}",
+                               "çü.,+-",
+                               "<>()'\""]),
+}
+KEYBOARD_REGION = stbt.Region(x=125, y=125, right=425, bottom=520)
+
+def define_keyboard():
+    kb = stbt.Keyboard()  # pylint:disable=redefined-outer-name
+    for mode in ["lowercase", "uppercase", "symbols"]:
+        kb.add_grid(top_grid, mode=mode)
+        kb.add_grid(bottom_grid, mode=mode)
+        g = middle_grids[mode]
+        kb.add_grid(g, mode=mode)
+
+        # Transitions between grids:
+        #
+        # abc ABC #+-  (top grid)
+        # ↕ ↕ ↕ ↕ ↕ ↕
+        # a b c d e f  (first row of middle grid)
+        kb.add_transition(g[0, 0].data, "abc", "KEY_UP", mode=mode)
+        kb.add_transition(g[1, 0].data, "abc", "KEY_UP", mode=mode)
+        kb.add_transition(g[2, 0].data, "ABC", "KEY_UP", mode=mode)
+        kb.add_transition(g[3, 0].data, "ABC", "KEY_UP", mode=mode)
+        kb.add_transition(g[4, 0].data, "#+-", "KEY_UP", mode=mode)
+        kb.add_transition(g[5, 0].data, "#+-", "KEY_UP", mode=mode)
+
+        # 5 6 7 8 9 0  (last row of middle grid)
+        # ↕ ↕ ↕ ↕ ↕ ↕
+        # SPC DEL CLR  (bottom grid)
+        kb.add_transition(g[0, 5].data, " ", "KEY_DOWN", mode=mode)
+        kb.add_transition(g[1, 5].data, " ", "KEY_DOWN", mode=mode)
+        kb.add_transition(g[2, 5].data, "DELETE", "KEY_DOWN", mode=mode)
+        kb.add_transition(g[3, 5].data, "DELETE", "KEY_DOWN", mode=mode)
+        kb.add_transition(g[4, 5].data, "CLEAR", "KEY_DOWN", mode=mode)
+        kb.add_transition(g[5, 5].data, "CLEAR", "KEY_DOWN", mode=mode)
+
+    # Transitions between modes:
+    for source_mode in ["lowercase", "uppercase", "symbols"]:
+        for name, target_mode in [("abc", "lowercase"),
+                                  ("ABC", "uppercase"),
+                                  ("#+-", "symbols")]:
+            kb.add_transition(kb.find_key(name=name, mode=source_mode),
+                              kb.find_key(name=name, mode=target_mode),
+                              "KEY_OK")
+
+    return kb
+
+
+kb = define_keyboard()
 
 
 class Search(stbt.FrameObject):
@@ -14,38 +88,6 @@ class Search(stbt.FrameObject):
     <https://stb-tester.com/manual/object-repository>.
     """
 
-    KEYBOARD_GRID = stbt.Grid(
-        region=stbt.Region(x=125, y=140, right=430, bottom=445),
-        data=[
-            "abcdef",
-            "ghijkl",
-            "mnopqr",
-            "stuvwx",
-            "yz1234",
-            "567890"])
-    BOTTOM_GRID = stbt.Grid(
-        region=stbt.Region(x=125, y=445, right=430, bottom=500),
-        data=[[" ", "DELETE", "CLEAR"]])
-
-    _graph = networkx.compose_all([
-        stbt.grid_to_navigation_graph(KEYBOARD_GRID),
-        stbt.grid_to_navigation_graph(BOTTOM_GRID),
-        stbt.Keyboard.parse_edgelist("""
-            5 SPACE KEY_DOWN
-            6 SPACE KEY_DOWN
-            7 BACKSPACE KEY_DOWN
-            8 BACKSPACE KEY_DOWN
-            9 CLEAR KEY_DOWN
-            0 CLEAR KEY_DOWN
-            SPACE 5 KEY_UP
-            SPACE 6 KEY_UP
-            BACKSPACE 7 KEY_UP
-            BACKSPACE 8 KEY_UP
-            CLEAR 9 KEY_UP
-            CLEAR 0 KEY_UP
-        """)])
-    _kb = stbt.Keyboard(_graph)
-
     @property
     def is_visible(self):
         """Are we on YouTube's Search page?
@@ -53,32 +95,27 @@ class Search(stbt.FrameObject):
         Note: An instance of this class is truthy if ``is_visible`` returns
         True, thanks to `stbt.FrameObject` magic.
         """
-        return stbt.match("Search.png", frame=self._frame)
+        return bool(self.selection)
 
     @property
     def selection(self):
-        """The name of the selected button on the on-screen keyboard.
+        """The selected key of the on-screen keyboard."""
+        for mode in ["lowercase", "uppercase", "symbols"]:
+            match = stbt.find_selection_from_background(
+                mode + ".png",
+                max_size=(115, 70),
+                frame=self._frame,
+                mask=KEYBOARD_REGION)
+            if match:
+                return kb.find_key(region=match.region, mode=mode)
 
-        For example 'g' or 'CLEAR'.
-        """
-        m = stbt.match("selection.png", frame=self._frame,
-                       region=stbt.Region.bounding_box(
-                           Search.KEYBOARD_GRID.region,
-                           Search.BOTTOM_GRID.region))
-        for grid in [Search.KEYBOARD_GRID, Search.BOTTOM_GRID]:
-            try:
-                text = grid.get(region=m.region).data
-                return text
-            except IndexError:
-                pass
-        assert False, "Matched selection %r outside of known locations" \
-            % (m.region,)
+        return None
 
     def enter_text(self, text):
-        return Search._kb.enter_text(text.lower(), page=self)
+        return kb.enter_text(text, page=self)
 
     def clear(self):
         page = self
-        page = Search._kb.navigate_to("CLEAR", page)
+        page = kb.navigate_to("CLEAR", page)
         stbt.press_and_wait("KEY_OK")  # pylint:disable=stbt-unused-return-value
         return page.refresh()
