@@ -74,9 +74,20 @@ def define_keyboard():
                               kb.find_key(name=name, mode=target_mode),
                               "KEY_OK")
 
-    for source_mode, target_mode in [("lowercase", "uppercase"),
-                                     ("uppercase", "symbols"),
-                                     ("symbols", "lowercase")]:
+    # Pressing KEY_PLAY cycles between the modes
+    for source_mode, target_mode in [
+            ("lowercase", "uppercase"),
+            ("symbols", "lowercase"),
+            # Pressing KEY_PLAY from "uppercase" goes to "lowercase" if you
+            # have already typed an uppercase letter since entering uppercase
+            # mode; if you haven't, it goes to "symbols". We don't keep track
+            # of this past state in our model, so we model it as a
+            # non-deterministic state machine -- that is, pressing KEY_PLAY
+            # from "uppercase" might go to "symbols" or to "lowercase", we just
+            # have to press it and then look at the screen to find out where we
+            # landed.
+            ("uppercase", "symbols"),
+            ("uppercase", "lowercase")]:
         for key in kb.find_keys(mode=source_mode):
             target = kb.find_key(region=key.region, mode=target_mode)
             kb.add_transition(key, target, "KEY_PLAY")
